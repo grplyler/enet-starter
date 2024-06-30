@@ -1,0 +1,8 @@
+// Create key bindings to run /build/client
+[
+    {
+        "key": "ctrl+shift+c",
+        "command": "workbench.action.tasks.runTask",
+        "args": "client"
+    }
+]
