@@ -6,12 +6,12 @@ project(enet-starter)
 add_subdirectory(vendor/enet)
 
 # Compile server.cpp as a separate binary
-add_executable(server src/server.cpp)
+add_executable(server src/server.cpp src/network.h)
 include_directories(server vendor/enet/include)
 target_link_libraries(server enet)
 
 # Compile client.cpp as a separate binary
-add_executable(client src/client.cpp)
+add_executable(client src/client.cpp src/network.h)
 include_directories(client vendor/enet/include)
 target_link_libraries(client enet)
 

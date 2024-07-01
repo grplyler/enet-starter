@@ -1,22 +1,8 @@
 #include <enet/enet.h>
 #include <stdio.h>
 #include <string.h>
-#include "msg.h"
+#include "network.h"
 
-void send_packet(ENetPeer *peer, unsigned char mtype, unsigned char dtype, unsigned int dsize, void *data) {
-    Message msg;
-    msg.mtype = mtype;
-    msg.dtype = dtype;
-    msg.dsize = dsize;
-    msg.data = data;
-    
-    size_t packet_size = sizeof(Message) + dsize;
-    ENetPacket *packet = enet_packet_create(NULL, packet_size, ENET_PACKET_FLAG_RELIABLE);
-    memcpy(packet->data, &msg, sizeof(Message));
-    memcpy(packet->data + sizeof(Message), data, dsize);
-
-    enet_peer_send(peer, 0, packet);
-}
 
 int main() {
     if (enet_initialize() != 0) {
@@ -50,19 +36,18 @@ int main() {
         printf("Connection to localhost:7777 failed.\n");
     }
 
+    // Send GameJoin message
+    Message message = MakeGameJoinMessage("PlayerOne", 1);
+    SendMessage(peer, &message);
+
     int counter = 0;
     // Send the counter to the server every second then increment it
     while (true) {
         printf("Sending %d to server.\n", counter);
-        send_packet(peer, MT_MESSAGE, DT_INT, sizeof(int), &counter);
+        Message message = MakeCounterMessage(counter);
+        SendMessage(peer, &message);
         enet_host_service(client, &event, 1000);
         counter++;
-
-        if (counter == 5) {
-            char *message = "Hello, Server!";
-            printf("Sending string to server: %s\n", message);
-            send_packet(peer, MT_MESSAGE, DT_STRING, strlen(message) + 1, message); // +1 for null terminator
-        }
     }
 
     enet_host_destroy(client);

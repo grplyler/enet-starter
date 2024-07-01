@@ -1,7 +1,28 @@
 #include <enet/enet.h>
 #include <stdio.h>
 #include <string.h>
-#include "msg.h"
+#include "network.h"
+
+void HandleMessage(ENetPeer *peer, Message *message) {
+    switch (message->type) {
+        case MT_GAME_JOIN:
+            printf("[GAMEJOIN] %s with player_id %d.\n", message->data.gameJoin.username, message->data.gameJoin.player_id);
+            break;
+        case MT_COUNTER:
+            printf("[COUNTER] %d.\n", message->data.counter.counter);
+            break;
+        case MT_DRAW_COMMAND:
+            printf("[DRAWCOMMAND] x: %d, y: %d, color: %d.\n",
+                message->data.drawCommand.x,
+                message->data.drawCommand.y,
+                message->data.drawCommand.color
+            );
+            break;
+        default:
+            printf("Received unknown message type.\n");
+            break;
+    }
+}
 
 int main() {
     if (enet_initialize() != 0) {
@@ -29,21 +50,14 @@ int main() {
             case ENET_EVENT_TYPE_CONNECT:
                 printf("A new client connected from %x:%u.\n", event.peer->address.host, event.peer->address.port);
                 break;
+                
             case ENET_EVENT_TYPE_RECEIVE:
-                printf("A packet of length %u was received from %p on channel %u.\n",
-                    event.packet->dataLength,
-                    event.peer->data,
-                    event.channelID
-                );
 
-                Message msg;
-                msg = parse_msg(event.packet);
-                print_msg(msg);
-
-                // Free the allocated memory for the message data
-                free(msg.data);
-                enet_packet_destroy(event.packet);
+                Message message;
+                DecodeMessage(event.packet->data, event.packet->dataLength, &message);
+                HandleMessage(event.peer, &message);
                 break;
+
             case ENET_EVENT_TYPE_DISCONNECT:
                 printf("%p disconnected.\n", event.peer->data);
                 event.peer->data = NULL;
